@@ -6,6 +6,9 @@ COPY pom.xml .
 COPY mvnw .
 COPY .mvn .mvn
 
+# Dar permisos de ejecución al wrapper
+RUN chmod +x mvnw
+
 # Descargar dependencias
 RUN ./mvnw dependency:go-offline -B
 
