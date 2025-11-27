@@ -1,32 +1,30 @@
+# Etapa de build
 FROM eclipse-temurin:17-jdk-alpine AS build
 WORKDIR /app
 
-# Copiar archivos de Maven
-COPY pom.xml .
-COPY mvnw .
+# Copiar archivos de Maven primero para aprovechar caching
+COPY pom.xml mvnw ./
 COPY .mvn .mvn
 
 # Dar permisos de ejecución al wrapper
 RUN chmod +x mvnw
 
-# Descargar dependencias
-RUN ./mvnw dependency:go-offline -B
+# Descargar solo las dependencias necesarias para compilar
+RUN ./mvnw clean package -DskipTests
 
-# Copiar código fuente
+# Copiar código fuente y compilar
 COPY src ./src
-
-# Compilar aplicación
 RUN ./mvnw clean package -DskipTests
 
 # Etapa de ejecución
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-# Copiar JAR desde etapa de build
+# Copiar JAR desde la etapa de build
 COPY --from=build /app/target/*.jar app.jar
 
-# Exponer puerto
+# Exponer puerto que Render usará
 EXPOSE 8080
 
-# Ejecutar aplicación
+# Comando para ejecutar la aplicación
 ENTRYPOINT ["java", "-jar", "app.jar"]
